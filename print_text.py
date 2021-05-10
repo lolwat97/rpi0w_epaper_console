@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 import sys
 import os
+import requests
 
 import ntplib
 from time import ctime
@@ -16,12 +17,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 class Console():
     def __init__(self):
-            self.font8 = ImageFont.truetype('Font.ttc', 8)
-            self.font10 = ImageFont.truetype('Font.ttc', 10)
-            self.font15 = ImageFont.truetype('Font.ttc', 15)
-            self.font24 = ImageFont.truetype('Font.ttc', 24)
-
-            self.epd = epd2in13_V2.EPD()
+        self.font8 = ImageFont.truetype('Font.ttc', 8)
+        self.font10 = ImageFont.truetype('Font.ttc', 10)
+        self.font15 = ImageFont.truetype('Font.ttc', 15)
+        self.font24 = ImageFont.truetype('Font.ttc', 24)
+        self.epd = epd2in13_V2.EPD()
+        self.data = []
 
     def init_screen(self):
         logging.info("init and Clear")
@@ -29,30 +30,38 @@ class Console():
         self.epd.Clear(0xFF)
 
 
-    def draw_screen(self, epd, font, data):
-        image = Image.new('1', (self.epd.height, self.epd.width), 255)  # 255: clear the frame    
+    def draw_screen(self):
+        image = Image.new('1', (self.epd.height, self.epd.width), 255)
         draw = ImageDraw.Draw(image)
         
-        time = data[0]
+        time = self.data[0]
 
-        draw.text((0, 0), time, font = font, fill = 0)
+        draw.text((0, 0), time, font = self.font10, fill = 0)
         self.epd.display(self.epd.getbuffer(image))
 
     def get_info(self):
         time = self.get_time()
-        return [time] 
+        fuck = self.get_request()
+        self.data = [time]
 
     def get_time(self):
         response = ntplib.NTPClient().request('europe.pool.ntp.org', version=3)
         return ctime(response.recv_time)
 
+    def get_request(self, url):
+        response = requests.get(url).text
+        return response
+
     def run(self):
         try:
             self.init_screen()
             while(True):
-                info = self.get_info()
-                self.draw_screen(self.epd, self.font10, info)
-                time.sleep(60)
+                try:
+                    self.draw_screen()
+                    time.sleep(60)
+                except Exception as e:
+                    logging.error(str(e))
+                    time.sleep(10)
     
         except IOError as e:
             logging.info(e)
