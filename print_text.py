@@ -44,7 +44,7 @@ class Console():
         draw.text((0, 15), twitter_followers, font = self.font10, fill=0)
         self.epd.display(self.epd.getbuffer(image))
 
-    def get_info(self):
+    def get_data(self):
         time = self.get_time()
         twitter_followers = get_twitter_followers.get_follower_count(self.webdriver)
         self.data = [time, twitter_followers]
@@ -62,6 +62,7 @@ class Console():
             self.init_screen()
             while(True):
                 try:
+                    self.get_data()
                     self.draw_screen()
                     time.sleep(60)
                 except Exception as e:
